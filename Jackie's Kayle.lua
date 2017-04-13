@@ -71,7 +71,7 @@ Callback.Add("Tick", function()
 	end
 	--E 
 	if Game.CanUseSpell(_E) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useE:Value() then
-		local t = _G.SDK.TargetSelector:GetTarget()
+		local t = _G.SDK.TargetSelector:GetTarget(1000)
 		if t and t.distance < 580 then
 			Control.CastSpell(HK_E)
 		end
@@ -123,6 +123,13 @@ Callback.Add("Tick", function()
 	if Game.CanUseSpell(_W) == READY and myHero.health/myHero.maxHealth < GameMenu.Settings.autoW:Value()/100 and myHero.mana > manaCalc() and not onRecall() then
 		Control.CastSpell(HK_W,myHero)
 	end
+
+end)
+
+Callback.Add("Draw", function()
+	if myHero.dead then return end
+
+	Draw.Circle(Vector(myHero.pos),525,1,Draw.Color(189, 183, 107, 255))
 
 end)
 
