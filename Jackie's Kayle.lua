@@ -17,9 +17,10 @@ GameMenu:MenuElement({type = MENU, id = "Settings", name = "Spell Usage"})
 GameMenu.Settings:MenuElement({id = "useQ", name = "Use Q in combo", value = true})
 GameMenu.Settings:MenuElement({id = "useW", name = "Use W to chase in combo", value = true})
 GameMenu.Settings:MenuElement({id = "autoW", name = "Auto W if health is below %", value = 20, min = 0, max = 100, step = 1})
+GameMenu.Settings:MenuElement({id = "autoWA", name = "Auto W on ally if health is below %", value = 15, min = 0, max = 100, step = 1})
 GameMenu.Settings:MenuElement({id = "useE", name = "Use E in combo", value = true})
 GameMenu.Settings:MenuElement({id = "autoR", name = "Auto R if health is below %", value = 10, min = 0, max = 100, step = 1})
-GameMenu.Settings:MenuElement({id = "autoRA", name = "Auto R on ally if health is below %", value = 10, min = 0, max = 100, step = 1})
+GameMenu.Settings:MenuElement({id = "autoRA", name = "Auto R on ally if health is below %", value = 5, min = 0, max = 100, step = 1})
 GameMenu:MenuElement({type = MENU, id = "ManaManager", name = "Mana Manager"})
 GameMenu.ManaManager:MenuElement({id = "saveForE", name = "Always save mana for E", value = true})
 GameMenu:MenuElement({type = MENU, id = "ks", name = "Kill Stealing"})
@@ -39,6 +40,16 @@ end
 
 function castQ(t)
 	Control.CastSpell(HK_Q,t)
+end
+
+function onRecall()
+	for i = 0, myHero.buffCount do
+		local buff = myHero:GetBuff(i)
+		if buff and buff.name == "recall" and buff.duration > 0 then
+			return true
+		end
+	end
+	return false
 end
 
 Callback.Add("Tick", function()
@@ -98,9 +109,18 @@ Callback.Add("Tick", function()
 			end
 		end
 	end
+
+--Auto W Ally
+	if Game.CanUseSpell(_W) == READY and next(ally) ~= nil then
+		for k, v in pairs(ally) do
+			if v.distance <= W.range and v.health/v.maxHealth*100 < GameMenu.Settings.autoWA:Value() and not v.isMe then
+				Control.CastSpell(HK_W,v)
+			end
+		end
+	end
 	
 --Auto W 
-	if Game.CanUseSpell(_W) == READY and myHero.health/myHero.maxHealth < GameMenu.Settings.autoW:Value()/100 and myHero.mana > manaCalc() then
+	if Game.CanUseSpell(_W) == READY and myHero.health/myHero.maxHealth < GameMenu.Settings.autoW:Value()/100 and myHero.mana > manaCalc() and not onRecall() then
 		Control.CastSpell(HK_W,myHero)
 	end
 
