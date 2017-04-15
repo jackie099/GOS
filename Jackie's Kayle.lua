@@ -70,7 +70,7 @@ Callback.Add("Tick", function()
 		end
 	end
 	--E 
-	if Game.CanUseSpell(_E) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useE:Value() then
+	if Game.CanUseSpell(_E) == READY and (_G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] or _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_HARASS]) and GameMenu.Settings.useE:Value() then
 		local t = _G.SDK.TargetSelector:GetTarget(1000)
 		if t and t.distance < 580 then
 			Control.CastSpell(HK_E)
