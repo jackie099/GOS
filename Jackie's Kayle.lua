@@ -29,7 +29,7 @@ GameMenu:MenuElement({type = MENU, id = "ManaManager", name = "Mana Manager"})
 GameMenu.ManaManager:MenuElement({id = "saveForE", name = "Always save mana for E", value = true})
 GameMenu:MenuElement({type = MENU, id = "ks", name = "Kill Stealing"})
 GameMenu.ks:MenuElement({id = "qKS", name = "Kill Steal with Q", value = true})
-GameMenu:MenuElement({type = SPACE, id = "ver", name = "v 1.2"})
+GameMenu:MenuElement({type = SPACE, id = "ver", name = "v 1.3"})
 GameMenu:MenuElement({type = SPACE, id = "about", name = "by Jackie099"})
 --GameMenu.ManaManager:MenuElement({id = "Wmana", name = "Do not Auto W if mana is below %", value = 20, min = 0, max = 100, step = 1})
 
