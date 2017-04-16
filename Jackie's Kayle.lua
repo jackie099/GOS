@@ -1,6 +1,10 @@
 
 if myHero.charName ~= "Kayle" then return end
 
+print("Welcome to Jackie's Kayle")
+
+
+
 require "DamageLib"
 
 -- Spell
@@ -30,6 +34,8 @@ GameMenu:MenuElement({type = SPACE, id = "about", name = "by Jackie099"})
 --GameMenu.ManaManager:MenuElement({id = "Wmana", name = "Do not Auto W if mana is below %", value = 20, min = 0, max = 100, step = 1})
 
 
+
+
 function manaCalc()
 	local ManatoSave =0;
 	if GameMenu.ManaManager.saveForE:Value() then
@@ -39,7 +45,7 @@ function manaCalc()
 end
 
 function castQ(t)
-	Control.CastSpell(HK_Q,t)
+	DelayAction(function() Control.CastSpell(HK_Q,t) end,0.2)
 end
 
 function onRecall()
@@ -52,16 +58,31 @@ function onRecall()
 	return false
 end
 
-Callback.Add("Tick", function()
-
---Combo
-	--Q 
+-- Q in combo and harass
+_G.SDK.Orbwalker:OnPostAttack(function()
 	if Game.CanUseSpell(_Q) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useQ:Value() and myHero.mana - Q.mana > manaCalc() then
 		local t = _G.SDK.TargetSelector:GetTarget(Q.range)
 		if t then
-			_G.SDK.Orbwalker:OnPostAttack(castQ(t))
+			castQ(t) 
 		end
 	end
+ end)
+
+Callback.Add("Tick", function()
+
+--Combo
+
+	--Q 
+	if Game.CanUseSpell(_Q) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useQ:Value() and myHero.mana - Q.mana > manaCalc() then
+		local t = _G.SDK.TargetSelector:GetTarget(Q.range)
+		if t and t.distance >= 525 and t.distance <= Q.range then
+			
+			_G.SDK.Orbwalker:SetMovement(false)
+			Control.CastSpell(HK_Q,t)
+			_G.SDK.Orbwalker:SetMovement(true)
+		end
+	end
+	
 	--W 
 	if Game.CanUseSpell(_W) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useW:Value() and myHero.mana - W.mana > manaCalc() then
 		local t = _G.SDK.TargetSelector:GetTarget(W.range+200)
