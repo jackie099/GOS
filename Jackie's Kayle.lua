@@ -58,18 +58,25 @@ function onRecall()
 	return false
 end
 
--- Q in combo and harass
-_G.SDK.Orbwalker:OnPostAttack(function()
-	if Game.CanUseSpell(_Q) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useQ:Value() and myHero.mana - Q.mana > manaCalc() then
-		local t = _G.SDK.TargetSelector:GetTarget(Q.range)
-		if t then
-			castQ(t) 
-		end
-	end
- end)
 
+
+ local subOnPostAttack = false
+ 
 Callback.Add("Tick", function()
 
+-- Q in combo and harass
+	if subOnPostAttack == false then
+		_G.SDK.Orbwalker:OnPostAttack(function()
+			if Game.CanUseSpell(_Q) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useQ:Value() and myHero.mana - Q.mana > manaCalc() then
+				local t = _G.SDK.TargetSelector:GetTarget(Q.range)
+				if t then
+					castQ(t) 
+				end
+			end
+		end)
+		subOnPostAttack = true
+	 end
+ 
 --Combo
 
 	--Q 
