@@ -74,17 +74,19 @@ end
 
 Callback.Add("Tick", function()
 
+
 	if _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
 		local maxRange = calcRange()
 		if Game.CanUseSpell(_Q) == READY and GameMenu.Settings.autoQ:Value()  then
 			local QOn = QOn()
-			local t = _G.SDK.TargetSelector:GetTarget(maxRange)
-			if t and t.distance > 525 and t.distance < maxRange and QOn == 1 then
+			local t = _G.SDK.TargetSelector:GetTarget(maxRange+200)
+			if t and t.distance > 525 and QOn == 1 then
 				Control.CastSpell(HK_Q)
-			elseif t and t.distance < 525 and QOn == 2 then
-				Control.CastSpell(HK_Q)
+			-- elseif t and t.distance < 525 and QOn == 2 then
+			-- 	Control.CastSpell(HK_Q)
 			end
 		end
+
 		if Game.CanUseSpell(_W) == READY and GameMenu.Settings.useW:Value() and GameMenu.ManaManager.Wmana:Value()/100 < myHero.mana/myHero.maxMana then
 			local t = _G.SDK.TargetSelector:GetTarget(W.range)
 			if t and t.distance < W.range then
@@ -102,21 +104,35 @@ Callback.Add("Tick", function()
 
 	if subOnPostAttack == false then
 		_G.SDK.Orbwalker:OnPostAttack(function()
+			local maxRange = calcRange()
+			local QOn = QOn()
+			if _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
+				--W in Combo
+				if Game.CanUseSpell(_W) == READY and GameMenu.Settings.useW:Value() and GameMenu.ManaManager.Wmana:Value()/100 < myHero.mana/myHero.maxMana then
+					local t = _G.SDK.TargetSelector:GetTarget(W.range)
+					if t and t.distance < W.range then
+						local predpos = t:GetPrediction(W.speed,W.delay/1000)
+						local block, list = W_Collision:__GetCollision(myHero, predpos, 5)
+						local dis = predpos:DistanceTo()
+						if dis < W.range and not block then
+							_G.SDK.Orbwalker:SetMovement(false)
+							dCast(HK_W,predpos)
+							_G.SDK.Orbwalker:SetMovement(true)
+						end
+					end
+				end
 
-			--W in Combo
-			if Game.CanUseSpell(_W) == READY and _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] and GameMenu.Settings.useW:Value() and GameMenu.ManaManager.Wmana:Value()/100 < myHero.mana/myHero.maxMana then
-				local t = _G.SDK.TargetSelector:GetTarget(W.range)
-				if t and t.distance < W.range then
-					local predpos = t:GetPrediction(W.speed,W.delay/1000)
-					local block, list = W_Collision:__GetCollision(myHero, predpos, 5)
-					local dis = predpos:DistanceTo()
-					if dis < W.range and not block then
-						_G.SDK.Orbwalker:SetMovement(false)
-						dCast(HK_W,predpos)
-						_G.SDK.Orbwalker:SetMovement(true)
+				--Auto Q
+				if Game.CanUseSpell(_Q) == READY and GameMenu.Settings.autoQ:Value()  then
+					local t = _G.SDK.TargetSelector:GetTarget(maxRange)
+					if t and t.distance > 525 and t.distance < maxRange and QOn == 1 then
+						Control.CastSpell(HK_Q)
+					elseif t and t.distance < 525 and QOn == 2 then
+						Control.CastSpell(HK_Q)
 					end
 				end
 			end
+
 		end)
 		subOnPostAttack = true
 	 end
