@@ -43,7 +43,7 @@ function calcRange()
 end
 
 function dCast(k,t)
-	DelayAction(function() Control.CastSpell(k,t) end,0.18)
+	DelayAction(function() Control.CastSpell(k,t) end,0.2)
 end
 
 function buffStunned(hero)
@@ -92,9 +92,9 @@ Callback.Add("Tick", function()
 				local block, list = W_Collision:__GetCollision(myHero, predpos, 5)
 				local dis = predpos:DistanceTo()
 				if dis < W.range and dis > maxRange + 60 and not block then
-					_G.SDK.Orbwalker:SetMovement(false)
+					--_G.SDK.Orbwalker:SetMovement(false)
 					dCast(HK_W,predpos)
-					_G.SDK.Orbwalker:SetMovement(true)
+					--_G.SDK.Orbwalker:SetMovement(true)
 				end
 			end
 		end
