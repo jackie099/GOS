@@ -12,10 +12,10 @@ require "Collision"
 
 local Q = myHero:GetSpellData(_Q);
 --local W = myHero:GetSpellData(_W);
-local W = {range = 1500, delay = 600, minionCollisionWidth = 60, speed = 3300}
+local W = {range = 1500, delay = 600, minionCollisionWidth = 60, speed = 3200}
 local E = myHero:GetSpellData(_E);
 local R = myHero:GetSpellData(_R);
-
+local tick = 0
 
 --Menu
 
@@ -23,6 +23,7 @@ local GameMenu = MenuElement({type = MENU, id = "GameMenu", name = "Jackie's Jin
 GameMenu:MenuElement({type = MENU, id = "Settings", name = "Spell Usage"})
 GameMenu.Settings:MenuElement({id = "autoQ", name = "Auto Q switch", value = true})
 GameMenu.Settings:MenuElement({id = "useW", name = "Use W in combo", value = true})
+GameMenu.Settings:MenuElement({id = "minW", name = "Min range to cast W", value = 200, min = 0, max = 600, step = 10})
 GameMenu.Settings:MenuElement({id = "autoE", name = "Auto E on CCed enemy", value = true})
 GameMenu:MenuElement({type = MENU, id = "ManaManager", name = "Mana Manager"})
 GameMenu.ManaManager:MenuElement({id = "Wmana", name = "Do not use W if mana is below %", value = 20, min = 0, max = 100, step = 1})
@@ -42,8 +43,21 @@ function calcRange()
 	return qlv*25 + 525 + myHero.boundingRadius + 50
 end
 
-function dCast(k,t)
-	DelayAction(function() Control.CastSpell(k,t) end,0.2)
+
+function dCast(k,t,d)
+
+	local new_tick = GetTickCount() - tick
+	if new_tick > 30*d then	
+		_G.SDK.Orbwalker:SetMovement(false)
+		_G.SDK.Orbwalker:SetAttack(false)
+		Control.CastSpell(k,t)
+		DelayAction(function()
+		_G.SDK.Orbwalker:SetMovement(true)
+		_G.SDK.Orbwalker:SetAttack(true)  end,d)
+		tick = GetTickCount()
+
+	end
+	
 end
 
 function buffStunned(hero)
@@ -68,23 +82,36 @@ end
 
 
 
- local subOnPostAttack = false
+local subOnPostAttack = false
  
- local W_Collision = Collision:SetSpell(W.range, W.speed, 0.6, W.minionCollisionWidth, true)
+local W_Collision = Collision:SetSpell(W.range, W.speed, 0.6, W.minionCollisionWidth, true)
+
+--local firstAttack = true
+
+local tick = 0
 
 Callback.Add("Tick", function()
 
 
 	if _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
+		if myHero.attackData.state == STATE_WINDUP then
+			return
+		end
+
 		local maxRange = calcRange()
-		if Game.CanUseSpell(_Q) == READY and GameMenu.Settings.autoQ:Value()  then
+		if Game.CanUseSpell(_Q) == READY and GameMenu.Settings.autoQ:Value() then
 			local QOn = QOn()
 			local t = _G.SDK.TargetSelector:GetTarget(maxRange+200)
-			if t and t.distance > 525 and QOn == 1 then
+			if t and t.distance > (525+myHero.boundingRadius) and QOn == 1 then
 				Control.CastSpell(HK_Q)
-			-- elseif t and t.distance < 525 and QOn == 2 then
-			-- 	Control.CastSpell(HK_Q)
+				--firstAttack = false
+				--print("switch to rocket")
+			elseif t and t.distance < (525+myHero.boundingRadius) and QOn == 2 then
+			 	Control.CastSpell(HK_Q)
+
+				--print("switch to mini")
 			end
+
 		end
 
 		if Game.CanUseSpell(_W) == READY and GameMenu.Settings.useW:Value() and GameMenu.ManaManager.Wmana:Value()/100 < myHero.mana/myHero.maxMana then
@@ -94,9 +121,7 @@ Callback.Add("Tick", function()
 				local block, list = W_Collision:__GetCollision(myHero, predpos, 5)
 				local dis = predpos:DistanceTo()
 				if dis < W.range and dis > maxRange + 60 and not block then
-					--_G.SDK.Orbwalker:SetMovement(false)
-					dCast(HK_W,predpos)
-					--_G.SDK.Orbwalker:SetMovement(true)
+					dCast(HK_W,predpos,0.6)
 				end
 			end
 		end
@@ -110,27 +135,26 @@ Callback.Add("Tick", function()
 				--W in Combo
 				if Game.CanUseSpell(_W) == READY and GameMenu.Settings.useW:Value() and GameMenu.ManaManager.Wmana:Value()/100 < myHero.mana/myHero.maxMana then
 					local t = _G.SDK.TargetSelector:GetTarget(W.range)
-					if t and t.distance < W.range then
+					if t and t.distance < W.range and GameMenu.Settings.minW:Value() < t.distance then
 						local predpos = t:GetPrediction(W.speed,W.delay/1000)
 						local block, list = W_Collision:__GetCollision(myHero, predpos, 5)
 						local dis = predpos:DistanceTo()
 						if dis < W.range and not block then
-							_G.SDK.Orbwalker:SetMovement(false)
-							dCast(HK_W,predpos)
-							_G.SDK.Orbwalker:SetMovement(true)
+							dCast(HK_W,predpos,0.6)
 						end
 					end
 				end
 
-				--Auto Q
-				if Game.CanUseSpell(_Q) == READY and GameMenu.Settings.autoQ:Value()  then
-					local t = _G.SDK.TargetSelector:GetTarget(maxRange)
-					if t and t.distance > 525 and t.distance < maxRange and QOn == 1 then
-						Control.CastSpell(HK_Q)
-					elseif t and t.distance < 525 and QOn == 2 then
-						Control.CastSpell(HK_Q)
-					end
-				end
+				-- --Auto Q
+				-- if Game.CanUseSpell(_Q) == READY and GameMenu.Settings.autoQ:Value()  then
+				-- 	local t = _G.SDK.TargetSelector:GetTarget(maxRange)
+				-- 	if t and t.distance > (525+myHero.boundingRadius) and t.distance < maxRange and QOn == 1 then
+				-- 		Control.CastSpell(HK_Q)
+				-- 	elseif t and t.distance < (525+myHero.boundingRadius) and QOn == 2 then
+				-- 		Control.CastSpell(HK_Q)
+				-- 	end
+				-- 	firstAttack = true
+				-- end
 			end
 
 		end)
@@ -144,7 +168,7 @@ Callback.Add("Tick", function()
 			local stun = buffStunned(v)
 			print(stun)
 			if v.distance <= E.range and stun then
-				dCast(HK_E,v)
+				dCast(HK_E,v,0.2)
 			end
 		end
 	end
