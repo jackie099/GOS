@@ -166,7 +166,6 @@ Callback.Add("Tick", function()
 	if Game.CanUseSpell(_E) == READY and next(enemy) ~= nil and GameMenu.Settings.autoE:Value() then
 		for k, v in pairs(enemy) do
 			local stun = buffStunned(v)
-			print(stun)
 			if v.distance <= E.range and stun then
 				dCast(HK_E,v,0.2)
 			end
