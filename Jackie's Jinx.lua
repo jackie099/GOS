@@ -116,7 +116,7 @@ Callback.Add("Tick", function()
 
 		if Game.CanUseSpell(_W) == READY and GameMenu.Settings.useW:Value() and GameMenu.ManaManager.Wmana:Value()/100 < myHero.mana/myHero.maxMana then
 			local t = _G.SDK.TargetSelector:GetTarget(W.range)
-			if t and t.distance < W.range then
+			if t and t.distance < W.range and t.distance > GameMenu.Settings.minW:Value() then
 				local predpos = t:GetPrediction(W.speed,W.delay/1000)
 				local block, list = W_Collision:__GetCollision(myHero, predpos, 5)
 				local dis = predpos:DistanceTo()
