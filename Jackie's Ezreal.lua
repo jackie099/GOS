@@ -1,7 +1,7 @@
 
 if myHero.charName ~= "Ezreal" then return end
 
-print("Welcome to Jackie's Ezreal")
+print("Welcome to Jackie's Jinx")
 
 
 
@@ -10,8 +10,9 @@ require "Collision"
 
 -- Spell
 
-local Q = {range = 1150, delay = 250, minionCollisionWidth = 60, speed = 2000}
+local Q = myHero:GetSpellData(_Q);
 local W = myHero:GetSpellData(_W);
+--local W = {range = 1500, delay = 600, minionCollisionWidth = 60, speed = 3200}
 local E = myHero:GetSpellData(_E);
 local R = myHero:GetSpellData(_R);
 local tick = 0
@@ -19,30 +20,38 @@ local tick = 0
 --Menu
 
 local GameMenu = MenuElement({type = MENU, id = "GameMenu", name = "Jackie's Ezreal"})
-GameMenu:MenuElement({type = MENU, id = "Settings", name = "Spell Usage"})
-GameMenu.Settings:MenuElement({id = "autoQ", name = "Auto Q", value = true})
--- GameMenu.Settings:MenuElement({id = "useW", name = "Use W in combo", value = true})
--- GameMenu.Settings:MenuElement({id = "minW", name = "Min range to cast W", value = 200, min = 0, max = 600, step = 10})
--- GameMenu.Settings:MenuElement({id = "autoE", name = "Auto E on CCed enemy", value = true})
--- GameMenu:MenuElement({type = MENU, id = "ManaManager", name = "Mana Manager"})
--- GameMenu.ManaManager:MenuElement({id = "Wmana", name = "Do not use W if mana is below %", value = 20, min = 0, max = 100, step = 1})
--- GameMenu:MenuElement({type = MENU, id = "ks", name = "Kill Stealing"})
--- --GameMenu.ks:MenuElement({id = "wKS", name = "Kill Steal with W", value = true})
+
 GameMenu:MenuElement({type = SPACE, id = "ver", name = "v 1.0"})
 GameMenu:MenuElement({type = SPACE, id = "about", name = "by Jackie099"})
+
 
 
 
 function dCast(k,t,d)
 
 	local new_tick = GetTickCount() - tick
-	if new_tick > 30*d then	
-		--_G.SDK.Orbwalker:SetMovement(false)
+	if new_tick > 1000 then	
+		local ping = Game.Latency()/1000
+		_G.SDK.Orbwalker:SetMovement(false)
 		_G.SDK.Orbwalker:SetAttack(false)
-		Control.CastSpell(k,t)
-		DelayAction(function()
-		--_G.SDK.Orbwalker:SetMovement(true)
-		_G.SDK.Orbwalker:SetAttack(true)  end,d)
+		DelayAction(function()		
+			local m = mousePos
+			print("got curse")
+			DelayAction(function()		
+				Control.SetCursorPos(t)
+				Control.KeyDown(k)
+				Control.KeyUp(k)
+				print("finished cast")
+
+				DelayAction(function()
+					Control.SetCursorPos(m)
+					print("reset curse")
+					_G.SDK.Orbwalker:SetMovement(true)
+					_G.SDK.Orbwalker:SetAttack(true)  
+
+				end,ping)
+			end,0.025)
+		end,ping)
 		tick = GetTickCount()
 
 	end
@@ -50,27 +59,27 @@ function dCast(k,t,d)
 end
 
 
--- local subOnPostAttack = false
+
+
  
-local Q_Collision = Collision:SetSpell(Q.range, Q.speed, 0.25, Q.minionCollisionWidth, true)
+local Q_Collision = Collision:SetSpell(Q.range, Q.speed, 2, 60, true)
 
 --local firstAttack = true
 
 local tick = 0
 
 Callback.Add("Tick", function()
-
+	--print(Game.Latency())
 
 	if _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
 		if myHero.attackData.state == STATE_WINDUP then
 			return
 		end
 
-
-		if Game.CanUseSpell(_Q) == READY and GameMenu.Settings.autoQ:Value() then
+		if Game.CanUseSpell(_Q) == READY then
 			local t = _G.SDK.TargetSelector:GetTarget(Q.range)
 			if t and t.distance < Q.range then
-				local predpos = t:GetPrediction(Q.speed,Q.delay/1000)
+				local predpos = t:GetPrediction(Q.speed,250/1000)
 				local block, list = Q_Collision:__GetCollision(myHero, predpos, 5)
 				local dis = predpos:DistanceTo()
 				if dis < Q.range and not block then
@@ -79,8 +88,12 @@ Callback.Add("Tick", function()
 			end
 		end
 	end
-end)
 
+
+
+
+
+end)
 
 Callback.Add("Draw", function()
 	if myHero.dead then return end
