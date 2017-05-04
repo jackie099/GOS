@@ -1,7 +1,7 @@
 
 if myHero.charName ~= "Ezreal" then return end
 
-print("Welcome to Jackie's Jinx")
+print("Welcome to Jackie's Ezreal")
 
 
 
@@ -22,6 +22,7 @@ local GameMenu = MenuElement({type = MENU, id = "GameMenu", name = "Jackie's Ezr
 
 GameMenu:MenuElement({type = SPACE, id = "ver", name = "v 1.0"})
 GameMenu:MenuElement({type = SPACE, id = "about", name = "by Jackie099"})
+
 local _OnVision = {}
 function OnVision(unit)
 	if _OnVision[unit.networkID] == nil then _OnVision[unit.networkID] = {state = unit.visible , tick = GetTickCount(), pos = unit.pos} end
@@ -143,7 +144,7 @@ function dCast(k,t,d)
 				_G.SDK.Orbwalker:SetAttack(true)  
 			end,(0.05))
 
-		end,0.02)
+		end,0.025)
 		ticks = GetTickCount()
 
 	end
@@ -161,8 +162,12 @@ local Q_Collision = Collision:SetSpell(Q.range, Q.speed, 2, 70, true)
 
 
 Callback.Add("Tick", function()
-	--print(Game.Latency())
+	--print(Game.Timer()-myHero:GetSpellData(_E).castTime)
+	E_Spell = myHero:GetSpellData(_E)
+	--print(myHero.activeSpell.name)
 
+
+	
 	if _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
 		if myHero.attackData.state == STATE_WINDUP then
 			return
@@ -173,15 +178,20 @@ Callback.Add("Tick", function()
 			if t then
 				if t and t.distance < Q.range then
 					--local predpos = t:GetPrediction(Q.speed,250/1000)
-					local predpos = GetPred(t,Q.speed,0.02)
+					local predpos = GetPred(t,Q.speed,0.025)
 					local block, list = Q_Collision:__GetCollision(myHero, predpos, 5)
 					local dis = predpos:DistanceTo(myHero.pos)
 					--local dis = t.distance
+					local onProcess = myHero.activeSpell.name
+					if not is and onProcess == "EzrealArcaneShift" or onProcess == "EzrealMysticShot" then
+						return
+					end
 					if dis < myRange and not block and myHero.attackData.state == 3 then
 						print(ticks,"aa cast")
 						dCast(HK_Q,predpos,250)
 					-- elseif	dis < Q.range and  dis > myRange and not block then
 					-- 	dCast(HK_Q,predpos,25)
+					
 					elseif dis < Q.range and not block then
 						print(ticks,"range cast")
 						dCast(HK_Q,myHero.pos:Extended(predpos,math.random(400,600)),250)
