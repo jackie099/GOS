@@ -15,7 +15,7 @@ local W = myHero:GetSpellData(_W);
 --local W = {range = 1500, delay = 600, minionCollisionWidth = 60, speed = 3200}
 local E = myHero:GetSpellData(_E);
 local R = myHero:GetSpellData(_R);
-local myRange = myHero.range
+local myRange = myHero.range+myHero.boundingRadius
 --Menu
 
 local GameMenu = MenuElement({type = MENU, id = "GameMenu", name = "Jackie's Ezreal"})
@@ -118,37 +118,40 @@ end
 local ticks = GetTickCount()
 
 function dCast(k,t,d)
-
-	local new_tick = GetTickCount() - ticks
-	if new_tick > 1000 then	
+	if t then
+		local m
 		local ping = Game.Latency()/1000
-		_G.SDK.Orbwalker:SetMovement(false)
-		_G.SDK.Orbwalker:SetAttack(false)
+		local new_tick = GetTickCount() - ticks
+		--print(new_tick)
+		if new_tick > 0.4*1800 then	
+			
+			_G.SDK.Orbwalker:SetMovement(false)
+			_G.SDK.Orbwalker:SetAttack(false)
 
-		DelayAction(function()		
-			local m = mousePos
-			--print(tick,"got curse")
-	
-			Control.SetCursorPos(t)
-			Control.KeyDown(k)
-			Control.KeyUp(k)
-			--print(tick,"finished cast")
+			DelayAction(function()		
+				m = mousePos
+				--print(m,"got curse")	
+				Control.SetCursorPos(t)
+				Control.KeyDown(k)
+				Control.KeyUp(k)
+				--print(t,"finished cast")
 
-			DelayAction(function()
-				Control.SetCursorPos(m)
-				--print(tick,"reset curse")
-				_G.SDK.Orbwalker:SetMovement(true)
-			end,(0.025))
+				DelayAction(function()
+					Control.SetCursorPos(m)
+					--print(tick,"reset curse")
+					_G.SDK.Orbwalker:SetMovement(true)
+					
+					DelayAction(function()
+						_G.SDK.Orbwalker:SetAttack(true)  
+					end,(0.1))
+					
+				end,(0.20))
 
-			DelayAction(function()
-				_G.SDK.Orbwalker:SetAttack(true)  
-			end,(0.05))
 
-		end,0.025)
-		ticks = GetTickCount()
-
+			end,0.1)
+			ticks = GetTickCount()
+		end
 	end
-	
 end
 
 
@@ -160,41 +163,44 @@ local Q_Collision = Collision:SetSpell(Q.range, Q.speed, 2, 70, true)
 --local firstAttack = true
 
 
-
+local pred
 Callback.Add("Tick", function()
 	--print(Game.Timer()-myHero:GetSpellData(_E).castTime)
 	E_Spell = myHero:GetSpellData(_E)
 	--print(myHero.activeSpell.name)
 
-
+	local t = _G.SDK.TargetSelector:GetTarget(Q.range)
+	pred = GetPred(t,Q.speed,0.1)
 	
 	if _G.SDK.Orbwalker.Modes[_G.SDK.ORBWALKER_MODE_COMBO] then
 		if myHero.attackData.state == STATE_WINDUP then
 			return
 		end
+		
 
 		if Game.CanUseSpell(_Q) == READY then
-			local t = _G.SDK.TargetSelector:GetTarget(Q.range)
+			
 			if t then
 				if t and t.distance < Q.range then
 					--local predpos = t:GetPrediction(Q.speed,250/1000)
-					local predpos = GetPred(t,Q.speed,0.025)
-					local block, list = Q_Collision:__GetCollision(myHero, predpos, 5)
-					local dis = predpos:DistanceTo(myHero.pos)
+					
+					local block, list = Q_Collision:__GetCollision(myHero, pred, 5)
+					local dis = pred:DistanceTo(myHero.pos)
 					--local dis = t.distance
 					local onProcess = myHero.activeSpell.name
 					if not is and onProcess == "EzrealArcaneShift" or onProcess == "EzrealMysticShot" then
 						return
 					end
+					
 					if dis < myRange and not block and myHero.attackData.state == 3 then
-						print(ticks,"aa cast")
-						dCast(HK_Q,predpos,250)
+						--print(ticks,"aa cast")
+						dCast(HK_Q,pred,250)
 					-- elseif	dis < Q.range and  dis > myRange and not block then
 					-- 	dCast(HK_Q,predpos,25)
 					
 					elseif dis < Q.range and not block then
-						print(ticks,"range cast")
-						dCast(HK_Q,myHero.pos:Extended(predpos,math.random(400,600)),250)
+						--print(ticks,"range cast")
+						dCast(HK_Q,myHero.pos:Extended(pred,math.random(400,600)),250)
 					end
 				end
 			end
@@ -210,7 +216,8 @@ end)
 
 Callback.Add("Draw", function()
 	if myHero.dead then return end
-
+	--print(pred)
+	Draw.Circle(pred,30,20,Draw.Color(189, 183, 107, 255))
 
 
 end)
